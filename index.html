@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravando Microfone</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
+  </head>
+  
+  <body>
+    <h1>Captura áudio do microfone e gera arquivos</h1>
+    <button type="button" id="btn">Start</button>
+    
+    <script>
+      $(function(){
+        let mediaRecorder
+
+        navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then( stream => {
+          // console.log(stream)
+
+          mediaRecorder = new MediaRecorder(stream)
+
+          let chunks = []
+
+          mediaRecorder.ondataavailable = data => { 
+            // console.log(data)
+            chunks.push(data.data)
+          }
+
+          mediaRecorder.onstart = () => {
+            chunks = []
+          }
+
+          mediaRecorder.onstop = () => { 
+            // console.log('stop')
+            const blob = new Blob(chunks, { type: 'audio/ogg; code=opus' })
+            const reader = new window.FileReader()
+            
+            reader.readAsDataURL(blob)
+            reader.onloadend = () => { 
+              // console.log(reader.result)
+              const audio = document.createElement('audio')
+
+              audio.src = reader.result
+              audio.controls = true
+              $('body').append(audio)
+            }
+
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+          }
+
+          // mediaRecorder.start()
+          // setTimeout(() => mediaRecorder.stop(), 3000)
+
+        }, err => {
+          $('body').append('<p>Você deve permitir o áudio</p>')
+        })
+
+        $('#btn').click(function(){
+          if($(this).text() === 'Start'){
+            mediaRecorder.start()
+            $(this).text('Stop')
+          }else{
+            mediaRecorder.stop()
+            $(this).text('Start')
+          }
+        })
+      })
+    </script>
+  </body>
+</html>
